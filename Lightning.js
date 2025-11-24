@@ -551,7 +551,6 @@ function toggleLight() {
     button.onclick = function () {
       isLightEnabled = !isLightEnabled;
       this.innerText = "Toogle Light: " + (isLightEnabled ? "ON" : "OFF");
-      render();
     };
   } else {
     console.log("Button with id 'lightBtn' not found!");
