@@ -353,7 +353,8 @@ function additionalAnim() {
           additionalAnimPhase = 2;
           animSeq = 8;
         } else {
-          if (currentIteration < iterations && translateEnabled) {
+          currentIteration++;
+          if (currentIteration < iterations) {
             additionalAnimPhase = 0;
             translationStep = 0;
             animSeq = 5;
@@ -369,7 +370,8 @@ function additionalAnim() {
     case 8: // Y-axis rotation phase
       if (thetaY >= 360) {
         thetaY = 0;
-        if (currentIteration < iterations && translateEnabled) {
+        currentIteration++;
+        if (currentIteration < iterations) {
           additionalAnimPhase = 0;
           translationStep = 0;
           animSeq = 5;
