@@ -38,17 +38,14 @@
       "use strict";
 
       // --- GLOBAL VARIABLES ---
+
       var gl;
       var program;
       var mvpMatrixLoc;
-
-      // Objects to hold buffer data for shapes (L and O)
       var shapeL, shapeO;
-
-      // Configuration
       const EXTRUSION_DEPTH = 0.5;
-      const COLOR_L = vec4(0.8, 0, 0.2, 1.0); // Reddish
-      const COLOR_O = vec4(0.2, 0.2, 0.6, 1.0); // Blueish
+      const COLOR_L = vec4(0.8, 0, 0.2, 1.0); 
+      const COLOR_O = vec4(0.2, 0.2, 0.6, 1.0); 
 
       // --- INITIALIZATION ---
 
@@ -60,9 +57,9 @@
           return;
         }
 
-        // Configure WebGL
+        // Set up WebGL
         gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.clearColor(1.0, 1.0, 1.0, 1.0); // White background
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
         gl.enable(gl.DEPTH_TEST);
 
         // Load shaders
@@ -73,32 +70,31 @@
 
         // --- DEFINE GEOMETRY ---
 
-        // Define 2D profile for 'L' (Counter-Clockwise)
+        // Define 2D face for 'L' (Counter-Clockwise)
         const vertices2D_L = [
-          vec2(-0.5, -1.0), // 0: Bottom Left
-          vec2(0.5, -1.0), // 1: Bottom Right
-          vec2(0.5, -0.7), // 2: Inner Corner Right
-          vec2(-0.2, -0.7), // 3: Inner Corner Left
-          vec2(-0.2, 1.0), // 4: Top Right
-          vec2(-0.5, 1.0), // 5: Top Left
+          vec2(-0.5, -1.0), // 0: bottom left
+          vec2(0.5, -1.0), // 1: bottom right
+          vec2(0.5, -0.7), // 2: inner corner right
+          vec2(-0.2, -0.7), // 3: inner corner left
+          vec2(-0.2, 1.0), // 4: top right
+          vec2(-0.5, 1.0), // 5: top left
         ];
 
-        // Define 2D profile for 'O' (Counter-Clockwise)
-        // Indices 0-3: Outer Box, 4-7: Inner Box (Hole)
+        // Define 2D face for 'O' (Counter-Clockwise)
         const vertices2D_O = [
-          // Outer Box
-          vec2(-0.5, -1.0), // 0: Bottom Left
-          vec2(0.5, -1.0), // 1: Bottom Right
-          vec2(0.5, 1.0), // 2: Top Right
-          vec2(-0.5, 1.0), // 3: Top Left
-          // Inner Box
-          vec2(-0.2, -0.7), // 4: Inner Bottom Left
-          vec2(0.2, -0.7), // 5: Inner Bottom Right
-          vec2(0.2, 0.7), // 6: Inner Top Right
-          vec2(-0.2, 0.7), // 7: Inner Top Left
+          // Outer box
+          vec2(-0.5, -1.0), // 0: bottom left
+          vec2(0.5, -1.0), // 1: bottom right
+          vec2(0.5, 1.0), // 2: top right
+          vec2(-0.5, 1.0), // 3: top left
+          // Inner box
+          vec2(-0.2, -0.7), // 4: inner bottom left
+          vec2(0.2, -0.7), // 5: inner bottom right
+          vec2(0.2, 0.7), // 6: inner top right
+          vec2(-0.2, 0.7), // 7: inner top left
         ];
 
-        // Build Shapes
+        // Build shapes
         shapeL = createExtrudedShape(
           vertices2D_L,
           EXTRUSION_DEPTH,
@@ -116,7 +112,7 @@
         render();
       };
 
-      // --- GEOMETRY BUILDER ---
+      // --- BUILD GEOMETRY ---
 
       function createExtrudedShape(vertices2D, depth, color, type) {
         var positions = [];
@@ -125,54 +121,54 @@
         var halfDepth = depth / 2.0;
         var vlength = vertices2D.length;
 
-        // Generate Vertices
-        // Front Face (z = +halfDepth = +0.25)
+        // Generate vertices
+        // Front face (z = +halfDepth)
         for (let i = 0; i < vlength; i++) {
           positions.push(vec3(vertices2D[i][0], vertices2D[i][1], halfDepth));
           colors.push(color);
         }
-        // Back Face (z = -halfDepth = -0.25)
+        // Back face (z = -halfDepth)
         for (let i = 0; i < vlength; i++) {
           positions.push(vec3(vertices2D[i][0], vertices2D[i][1], -halfDepth));
-          // Make back face slightly darker
+          // Make back face darker
           colors.push(
             vec4(color[0] * 0.5, color[1] * 0.5, color[2] * 0.5, 1.0)
           );
         }
 
-        // Triangulation: Generate Indices 
+        // Triangulation: Generate indices 
         if (type === "L") {
-          // Front Face
+          // Front face
           indices.push(0, 1, 3);
           indices.push(1, 2, 3);
           indices.push(0, 3, 5);
           indices.push(3, 4, 5);
 
-          // Back Face (Offset by vlength, reverse winding order)
+          // Back face (offset by vlength, reverse winding order)
           indices.push(vlength + 0, vlength + 3, vlength + 1);
           indices.push(vlength + 1, vlength + 3, vlength + 2);
           indices.push(vlength + 0, vlength + 5, vlength + 3);
           indices.push(vlength + 3, vlength + 5, vlength + 4);
 
-          // Side Faces (Standard loop)
+          // Side faces
           generateSideIndices(indices, vlength);
         } else if (type === "O") {
-          // Front Face (4 trapezoids connecting outer to inner)
+          // Front face
           pushQuad(indices, 0, 1, 5, 4); // Bottom
           pushQuad(indices, 1, 2, 6, 5); // Right
           pushQuad(indices, 2, 3, 7, 6); // Top
           pushQuad(indices, 3, 0, 4, 7); // Left
 
-          // Back Face (Offset by vlength, reverse winding)
+          // Back face (offset by vlength, reverse winding order)
           pushBackQuad(indices, 0, 1, 5, 4, vlength);
           pushBackQuad(indices, 1, 2, 6, 5, vlength);
           pushBackQuad(indices, 2, 3, 7, 6, vlength);
           pushBackQuad(indices, 3, 0, 4, 7, vlength);
 
-          // Side Faces
-          // External Loop (0->1->2->3->0)
+          // Side faces
+          // Outer box Loop (0->1->2->3->0)
           generateSideLoop(indices, 0, 4, vlength);
-          // Internal Loop (4->5->6->7->4)
+          // Inner box Loop (4->5->6->7->4)
           generateSideLoop(indices, 4, 4, vlength);
         }
 
@@ -233,7 +229,7 @@
         indices.push(a, c, d);
       }
 
-      // Helper to push a back face quad (2 triangles) with reversed winding
+      // Helper to push a back face quad (2 triangles) with reverse winding
       function pushBackQuad(indices, a, b, c, d, vlength) {
         indices.push(vlength + a, vlength + d, vlength + c);
         indices.push(vlength + a, vlength + c, vlength + b);
@@ -244,20 +240,20 @@
       function render() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // Setup Camera (View and Projection)
+        // Setup camera (View and Projection)
         const V = lookAt(vec3(3, 4, 6), vec3(0, 0, 0), vec3(0, 1, 0));  // eye, at, up
         const P = perspective(45, gl.canvas.width / gl.canvas.height, 0.1, 100); // fovy, aspect (w/h), near, far
         const VP = mult(P, V);
 
-        // Draw First 'L' (Translate Left)
+        // Draw first 'L' (translate left)
         let M = translate(-1.5, 0.0, 0.0);
         drawShape(shapeL, mult(VP, M));
 
-        // Draw 'O' (Center)
+        // Draw 'O' (center)
         M = translate(0.0, 0.0, 0.0);
         drawShape(shapeO, mult(VP, M));
 
-        // Draw Second 'L' (Translate Right)
+        // Draw second 'L' (translate right)
         M = translate(1.5, 0.0, 0.0);
         drawShape(shapeL, mult(VP, M));
 
@@ -280,10 +276,10 @@
         // Bind index buffer
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.iBuffer);
 
-        // Send Matrix Uniform
+        // Send matrix uniform
         gl.uniformMatrix4fv(mvpMatrixLoc, false, flatten(mvpMatrix));
 
-        // Draw Elements (Indexed Drawing)
+        // Draw elements (indexed drawing)
         gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
       }
     </script>
