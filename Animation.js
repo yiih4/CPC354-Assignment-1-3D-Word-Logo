@@ -245,21 +245,6 @@ function drawShape(shape, mvpMatrix) {
   gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
 }
 
-// Returns a 4x4 rotation matrix for rotation around the Z-axis
-function rotateZ(degrees) {
-  var rad = radians(degrees); // Convert degrees to radians
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
-
-  // Rotation matrix around Z-axis
-  return mat4(
-    vec4(c, -s, 0, 0),
-    vec4(s, c, 0, 0),
-    vec4(0, 0, 1, 0),
-    vec4(0, 0, 0, 1)
-  );
-}
-
 // Handles the animation sequence of the word logo
 function defaultAnim() {
   switch (animSeq) {

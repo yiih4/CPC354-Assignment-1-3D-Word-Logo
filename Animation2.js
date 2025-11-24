@@ -17,7 +17,8 @@ let animSeq = 0; // Animation sequence
 let theta = 0; // Rotation angle in degrees
 let scaleFactor = 1.0; // Scaling factor for the word logo
 const maxScale = 2.0; // Target scale for "full-screen" effect
-let translateX = 0, translateY = 0; // Translation values
+let translateX = 0,
+  translateY = 0; // Translation values
 let isAnimating = false;
 
 // UI elements
@@ -224,7 +225,10 @@ function render() {
   }
 
   // Apply transformations
-  let M = mult(translate(translateX, translateY, 0), mult(rotateZ(theta), scale(scaleFactor, scaleFactor, 1)));
+  let M = mult(
+    translate(translateX, translateY, 0),
+    mult(rotateZ(theta), scale(scaleFactor, scaleFactor, 1))
+  );
 
   // Draw shapes with rotated matrix
   drawShape(shapeL, mult(VP, mult(M, translate(-1.5, 0, 0)))); // Left L
@@ -256,21 +260,6 @@ function drawShape(shape, mvpMatrix) {
 
   // Draw Elements (Indexed Drawing)
   gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
-}
-
-// Returns a 4x4 rotation matrix for rotation around the Z-axis
-function rotateZ(degrees) {
-  var rad = radians(degrees); // Convert degrees to radians
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
-
-  // Rotation matrix around Z-axis
-  return mat4(
-    vec4(c, -s, 0, 0),
-    vec4(s, c, 0, 0),
-    vec4(0, 0, 1, 0),
-    vec4(0, 0, 0, 1)
-  );
 }
 
 // Handles the animation sequence of the word logo

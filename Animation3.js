@@ -307,47 +307,80 @@ function drawShape(shape, mvpMatrix) {
   gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
 }
 
-// Returns a 4x4 rotation matrix for rotation around the Z-axis
-function rotateZ(degrees) {
-  var rad = radians(degrees); // Convert degrees to radians
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
 
-  // Rotation matrix around Z-axis
-  return mat4(
-    vec4(c, -s, 0, 0),
-    vec4(s, c, 0, 0),
-    vec4(0, 0, 1, 0),
-    vec4(0, 0, 0, 1)
-  );
-}
 
-// Returns a 4x4 rotation matrix for rotation around the Y-axis
-function rotateY(degrees) {
-  var rad = radians(degrees);
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
+// Additional animations function
+function additionalAnim() {
+  switch (animSeq) {
+    case 5: // Start additional animations after enlarge
+      if (translateEnabled) {
+        clockwiseTranslation();
+      } else if (xRotateEnabled) {
+        additionalAnimPhase = 1;
+        animSeq = 7;
+      } else if (yRotateEnabled) {
+        additionalAnimPhase = 2;
+        animSeq = 8;
+      } else {
+        isAnimating = false;
+        enableUI();
+      }
+      break;
 
-  return mat4(
-    vec4(c, 0, s, 0),
-    vec4(0, 1, 0, 0),
-    vec4(-s, 0, c, 0),
-    vec4(0, 0, 0, 1)
-  );
-}
+    case 6: // Translation complete, move to additional animations
+      currentIteration++;
+      if (xRotateEnabled) {
+        additionalAnimPhase = 1;
+        animSeq = 7;
+      } else if (yRotateEnabled) {
+        additionalAnimPhase = 2;
+        animSeq = 8;
+      } else {
+        if (currentIteration < iterations && translateEnabled) {
+          translationStep = 0;
+          animSeq = 5;
+        } else {
+          isAnimating = false;
+          enableUI();
+        }
+      }
+      break;
 
-// Returns a 4x4 rotation matrix for rotation around the X-axis
-function rotateX(degrees) {
-  var rad = radians(degrees);
-  var c = Math.cos(rad);
-  var s = Math.sin(rad);
+    case 7: // X-axis rotation phase
+      if (thetaX >= 360) {
+        thetaX = 0;
+        if (yRotateEnabled) {
+          additionalAnimPhase = 2;
+          animSeq = 8;
+        } else {
+          if (currentIteration < iterations && translateEnabled) {
+            additionalAnimPhase = 0;
+            translationStep = 0;
+            animSeq = 5;
+          } else {
+            isAnimating = false;
+            enableUI();
+            additionalAnimPhase = 0;
+          }
+        }
+      }
+      break;
 
-  return mat4(
-    vec4(1, 0, 0, 0),
-    vec4(0, c, -s, 0),
-    vec4(0, s, c, 0),
-    vec4(0, 0, 0, 1)
-  );
+    case 8: // Y-axis rotation phase
+      if (thetaY >= 360) {
+        thetaY = 0;
+        if (currentIteration < iterations && translateEnabled) {
+          additionalAnimPhase = 0;
+          translationStep = 0;
+          animSeq = 5;
+        } else {
+          isAnimating = false;
+          enableUI();
+          additionalAnimPhase = 0;
+        }
+      }
+      break;
+  }
 }
 
 // Clockwise translation function
@@ -420,75 +453,10 @@ function defaultAnim() {
       break;
 
     case 5: // Start additional animations after enlarge
-      if (translateEnabled) {
-        clockwiseTranslation();
-      } else if (xRotateEnabled) {
-        additionalAnimPhase = 1;
-        animSeq = 7;
-      } else if (yRotateEnabled) {
-        additionalAnimPhase = 2;
-        animSeq = 8;
-      } else {
-        isAnimating = false;
-        enableUI();
-      }
-      break;
-
-    case 6: // Translation complete, move to additional animations
-      currentIteration++;
-      if (xRotateEnabled) {
-        additionalAnimPhase = 1;
-        animSeq = 7;
-      } else if (yRotateEnabled) {
-        additionalAnimPhase = 2;
-        animSeq = 8;
-      } else {
-        // Check if more iterations needed
-        if (currentIteration < iterations && translateEnabled) {
-          translationStep = 0;
-          animSeq = 5;
-        } else {
-          isAnimating = false;
-          enableUI();
-        }
-      }
-      break;
-
+    case 6: // Translation complete
     case 7: // X-axis rotation phase
-      if (thetaX >= 360) {
-        thetaX = 0;
-        if (yRotateEnabled) {
-          additionalAnimPhase = 2;
-          animSeq = 8;
-        } else {
-          // Check if more iterations needed
-          if (currentIteration < iterations && translateEnabled) {
-            additionalAnimPhase = 0;
-            translationStep = 0;
-            animSeq = 5;
-          } else {
-            isAnimating = false;
-            enableUI();
-            additionalAnimPhase = 0;
-          }
-        }
-      }
-      break;
-
     case 8: // Y-axis rotation phase
-      if (thetaY >= 360) {
-        thetaY = 0;
-        // Check if more iterations needed
-        if (currentIteration < iterations && translateEnabled) {
-          additionalAnimPhase = 0;
-          translationStep = 0;
-          animSeq = 5;
-        } else {
-          isAnimating = false;
-          enableUI();
-          additionalAnimPhase = 0;
-        }
-      }
+      additionalAnim();
       break;
   }
 }
