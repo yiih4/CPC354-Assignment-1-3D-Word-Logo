@@ -328,7 +328,6 @@ function additionalAnim() {
       break;
 
     case 6: // Translation complete, move to additional animations
-      currentIteration++;
       if (xRotateEnabled) {
         additionalAnimPhase = 1;
         animSeq = 7;
@@ -336,6 +335,7 @@ function additionalAnim() {
         additionalAnimPhase = 2;
         animSeq = 8;
       } else {
+        currentIteration++;
         if (currentIteration < iterations && translateEnabled) {
           translationStep = 0;
           animSeq = 5;
