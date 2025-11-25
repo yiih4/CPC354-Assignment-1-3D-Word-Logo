@@ -553,9 +553,9 @@ function resetValue() {
   shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
   shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
 
-  // Reset toogle light
+  // Reset toggle light
   isLightEnabled = false;
-  lightBtn.innerText = "Toogle Light: OFF";
+  lightBtn.innerText = "Toggle Light: OFF";
 
   render();
 }
@@ -582,7 +582,7 @@ function updateUI() {
   // Get UI elements
   startBtn = document.getElementById("startBtn");
   stopBtn = document.getElementById("stopBtn");
-  lightBtn = document.getElementById("lightBtn");   // toogle light button
+  lightBtn = document.getElementById("lightBtn");   // Toggle light button
   yRotateCheck = document.getElementById("yRotateCheck");
   xRotateCheck = document.getElementById("xRotateCheck");
   translateCheck = document.getElementById("translateCheck");
@@ -600,7 +600,7 @@ function updateUI() {
   // Add event listeners
   startBtn.addEventListener("click", startAnimation);
   stopBtn.addEventListener("click", stopResetAnimation);
-  lightBtn.addEventListener("click", toggleLight);  // toogle light button
+  lightBtn.addEventListener("click", toggleLight);  // Toggle light button
   yRotateCheck.addEventListener("change", function () {
     yRotateEnabled = this.checked;
     if (!yRotateEnabled) {
@@ -686,5 +686,5 @@ function updateUI() {
 // Simple light toggle function
 function toggleLight() {
   isLightEnabled = !isLightEnabled;
-  lightBtn.innerText = "Toogle Light: " + (isLightEnabled ? "ON" : "OFF");
+  lightBtn.innerText = "Toggle Light: " + (isLightEnabled ? "ON" : "OFF");
 }
