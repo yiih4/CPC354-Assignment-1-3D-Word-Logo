@@ -20,6 +20,11 @@
         height: 100vh;
       }
 
+      .layout > div:first-child {
+        height: 100vh;
+        overflow: hidden;
+      }
+
       #gl-canvas {
         width: 100%;
         height: 100%;
@@ -31,12 +36,13 @@
         background: #f7d1f3;
         border-left: 1px solid #ddd;
         box-shadow: -4px 0 10px rgba(0, 0, 0, 0.05);
+        height: 100vh;
+        overflow-y: auto;
+        box-sizing: border-box;
       }
 
       h3 {
-        margin-top: 15px;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #ddd;
+        margin-top: 12px;
         font-size: 15px;
         color: #444;
       }
@@ -45,7 +51,7 @@
         font-size: 14px;
         color: #333;
         display: block;
-        margin-top: 10px;
+        margin-top: 8px;
         margin-bottom: 4px;
       }
 
@@ -54,7 +60,6 @@
       }
 
       input[type="color"] {
-        margin-top: 5px;
         width: 70px;
         height: 35px;
         border: none;
@@ -98,11 +103,14 @@
         font-size: 13px;
         color: #666;
       }
+
+      .panel > div > div > label {
+        margin-top: 0;
+      }
     </style>
   </head>
   <body>
     <div class="layout">
-
       <!-- Canvas Section -->
       <div>
         <canvas id="gl-canvas"></canvas>
@@ -121,25 +129,32 @@
         <span class="valueLabel" id="speedValue">1</span>
 
         <label>Extrusion Depth</label>
-        <input type="range" id="depthSlider" min="0.05" max="1.5" step="0.05" value="0.5" />
+        <input
+          type="range"
+          id="depthSlider"
+          min="0.05"
+          max="1.5"
+          step="0.05"
+          value="0.5"
+        />
         <span class="valueLabel" id="depthValue">0.50</span>
 
         <h3>Colours</h3>
 
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div style="display: flex; gap: 10px; align-items: center">
           <div>
             <label>L Colour</label>
-            <input type="color" id="colorL" value="#cc0033">
+            <input type="color" id="colorL" value="#cc0033" />
           </div>
 
           <div>
             <label>O Colour</label>
-            <input type="color" id="colorO" value="#333399">
+            <input type="color" id="colorO" value="#333399" />
           </div>
         </div>
-        
+
         <label>Canvas Colour</label>
-        <input type="color" id="bgColor" value="#E6E6E6">
+        <input type="color" id="bgColor" value="#E6E6E6" />
 
         <label>Color Mode</label>
         <select id="colorModeSelect">
@@ -153,9 +168,16 @@
 
         <h3>Animation</h3>
 
-        <label><input type="checkbox" id="translateCheck" checked /> Enable Translation</label>
-        <label><input type="checkbox" id="xRotateCheck" /> X-Axis Rotation</label>
-        <label><input type="checkbox" id="yRotateCheck" /> Y-Axis Rotation</label>
+        <label
+          ><input type="checkbox" id="translateCheck" checked /> Enable
+          Translation</label
+        >
+        <label
+          ><input type="checkbox" id="xRotateCheck" /> X-Axis Rotation</label
+        >
+        <label
+          ><input type="checkbox" id="yRotateCheck" /> Y-Axis Rotation</label
+        >
 
         <button id="startBtn">Start Animation</button>
         <button id="stopBtn">Reset</button>
@@ -199,6 +221,5 @@
     </script>
 
     <script src="Animation4.js"></script>
-    
   </body>
 </html>
