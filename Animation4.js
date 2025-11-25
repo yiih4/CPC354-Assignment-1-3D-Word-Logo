@@ -37,6 +37,7 @@
       let animSpeed = 1;
       let additionalAnimPhase = 0;
       let translateEnabled = true;
+      let isRenderActive = false;
 
       // UI elements
       var startBtn,
@@ -123,8 +124,11 @@
         // Setup UI event listeners
         updateUI();
 
-        // Render the scene
-        render();
+        // Start the render loop
+        if (!isRenderActive) {
+          isRenderActive = true;
+          render();
+        }
       };
 
 
@@ -287,8 +291,10 @@
         drawShape(shapeO, mult(VP, mult(M, translate(0, 0, 0)))); // O
         drawShape(shapeL, mult(VP, mult(M, translate(1.5, 0, 0)))); // Right L
 
-        // Animate
-        requestAnimationFrame(render);
+        // Continue animation loop
+        if (isRenderActive) {
+          requestAnimationFrame(render);
+        }
       }
 
       function drawShape(shape, mvpMatrix) {
@@ -553,7 +559,6 @@
         gl.clearColor(0.9, 0.9, 0.9, 1.0); // hex #E6E6E6 to RGBA
         shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
         shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
-        render();
       }
       
     // Helper function to convert #RRGGBB to vec4
