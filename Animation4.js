@@ -333,8 +333,17 @@
               additionalAnimPhase = 2;
               animSeq = 8;
             } else {
-              isAnimating = false;
-              enableUI();
+              currentIteration++;
+              if (currentIteration < iterations) {
+                if (iterations > 1) {
+                  animSeq = 9;
+                } else {
+                  resetAnimationCycle();
+                }
+              } else {
+                isAnimating = false;
+                enableUI();
+              }
             }
             break;
 
@@ -347,9 +356,12 @@
               animSeq = 8;
             } else {
               currentIteration++;
-              if (currentIteration < iterations && translateEnabled) {
-                translationStep = 0;
-                animSeq = 5;
+              if (currentIteration < iterations) {
+                if (iterations > 1) {
+                  animSeq = 9;
+                } else {
+                  resetAnimationCycle();
+                }
               } else {
                 isAnimating = false;
                 enableUI();
@@ -366,9 +378,11 @@
               } else {
                 currentIteration++;
                 if (currentIteration < iterations) {
-                  additionalAnimPhase = 0;
-                  translationStep = 0;
-                  animSeq = 5;
+                  if (iterations > 1) {
+                    animSeq = 9;
+                  } else {
+                    resetAnimationCycle();
+                  }
                 } else {
                   isAnimating = false;
                   enableUI();
@@ -383,9 +397,11 @@
               thetaY = 0;
               currentIteration++;
               if (currentIteration < iterations) {
-                additionalAnimPhase = 0;
-                translationStep = 0;
-                animSeq = 5;
+                if (iterations > 1) {
+                  animSeq = 9;
+                } else {
+                  resetAnimationCycle();
+                }
               } else {
                 isAnimating = false;
                 enableUI();
@@ -461,7 +477,20 @@
             if (scaleFactor < maxScale) {
               scaleFactor += 0.01 * animSpeed;
             } else {
-              animSeq = 5;
+              // Check if we need to repeat default animation
+              if (currentIteration + 1 < iterations && !translateEnabled && !xRotateEnabled && !yRotateEnabled) {
+                // Start delarge animation if iterations > 1
+                if (iterations > 1) {
+                  animSeq = 9;
+                } else {
+                  theta = 0;
+                  scaleFactor = 1.0;
+                  animSeq = 0;
+                  currentIteration++;
+                }
+              } else {
+                animSeq = 5;
+              }
             }
             break;
 
@@ -470,6 +499,22 @@
           case 7: // X-axis rotation phase
           case 8: // Y-axis rotation phase
             additionalAnim();
+            break;
+
+          case 9: // Delarge to origin size after each iteration
+            if (scaleFactor > 1.0) {
+              scaleFactor -= 0.01 * animSpeed;
+            } else {
+              theta = 0;
+              thetaX = 0;
+              thetaY = 0;
+              translateX = 0;
+              translateY = 0;
+              scaleFactor = 1.0;
+              translationStep = 0;
+              additionalAnimPhase = 0;
+              animSeq = 0;
+            }
             break;
         }
       }
