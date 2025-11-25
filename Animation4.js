@@ -8,6 +8,10 @@
       // Objects to hold buffer data for shapes (L and O)
       var shapeL, shapeO;
 
+      // Lightning
+      var useLightingLoc;
+      var isLightEnabled = false;
+
       // Configuration
       let EXTRUSION_DEPTH = 0.5; // Default extrusion depth
       let COLOR_L = vec4(0.8, 0, 0.2, 1.0); // Reddish
@@ -123,6 +127,9 @@
 
         // Setup UI event listeners
         updateUI();
+
+        // Set Up lighting
+        toggleLight();
 
         // Start the render loop
         if (!isRenderActive) {
@@ -258,6 +265,7 @@
 
       function render() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.uniform1i(useLightingLoc, isLightEnabled ? 1 : 0);
 
         // Setup Camera
         const V = lookAt(vec3(1, 4, 9), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -724,4 +732,19 @@
 
         //Window resize
         window.addEventListener("resize", resizeCanvas);
+      }
+
+      function toggleLight() {
+        useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
+        gl.uniform1i(useLightingLoc, 0);
+
+        var button = document.getElementById("lightBtn");
+        if (button) {
+          button.onclick = function () {
+            isLightEnabled = !isLightEnabled;
+            this.innerText = "Light: " + (isLightEnabled ? "ON" : "OFF");
+          };
+        } else {
+          console.log("Button with id 'lightBtn' not found!");
+        }
       }

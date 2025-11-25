@@ -159,6 +159,7 @@
 
         <button id="startBtn">Start Animation</button>
         <button id="stopBtn">Reset</button>
+        <button id="lightBtn">Light: OFF</button>
       </div>
     </div>
 
@@ -167,11 +168,13 @@
       in vec4 aPosition;
       in vec4 aColor;
       out vec4 vColor;
+      out vec4 vPosition;
       uniform mat4 uMVP;
 
       void main() {
           vColor = aColor;
-          gl_Position = uMVP * aPosition;
+          vPosition = uMVP * aPosition;
+          gl_Position = vPosition;
       }
     </script>
 
@@ -179,10 +182,19 @@
       #version 300 es
       precision mediump float;
       in vec4 vColor;
+      in vec4 vPosition;
       out vec4 fColor;
+      uniform bool uLightEnabled;
 
       void main() {
-          fColor = vColor;
+        if(uLightEnabled){
+            vec3 normal = normalize(cross(dFdx(vPosition.xyz), dFdy(vPosition.xyz)));
+            vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+            float brightness = max(dot(normal, lightDir), 0.0);
+            fColor = vec4(vColor.rgb * brightness, vColor.a);
+        }else{
+            fColor = vColor;
+        }
       }
     </script>
 
