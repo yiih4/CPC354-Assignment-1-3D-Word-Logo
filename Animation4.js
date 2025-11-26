@@ -742,7 +742,7 @@
         if (button) {
           button.onclick = function () {
             isLightEnabled = !isLightEnabled;
-            this.innerText = "Light: " + (isLightEnabled ? "ON" : "OFF");
+            this.innerText = "Toggle Light: " + (isLightEnabled ? "ON" : "OFF");
           };
         } else {
           console.log("Button with id 'lightBtn' not found!");
