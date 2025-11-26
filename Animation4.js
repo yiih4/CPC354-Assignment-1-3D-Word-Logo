@@ -593,7 +593,8 @@ function resetValue() {
   yRotateCheck.checked = false;
   xRotateCheck.checked = false;
   translateCheck.checked = true;
-
+  colorModeSelect.value = "classic";
+  
   // Reset extrusion depth
   EXTRUSION_DEPTH = 0.5;
   depthSlider.value = EXTRUSION_DEPTH;
