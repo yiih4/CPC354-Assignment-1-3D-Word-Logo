@@ -523,9 +523,9 @@ function defaultAnim() {
 
 function startAnimation() {
   // Reset values before starting
-  theta = 0;
-  thetaY = 0;
   thetaX = 0;
+  thetaY = 0;
+  thetaZ = 0;
   translateX = 0;
   translateY = 0;
   scaleFactor = 1.0;
@@ -575,9 +575,9 @@ function enableUI() {
 
 function resetValue() {
   // Animation/Transform Reset
-  theta = 0;
-  thetaY = 0;
   thetaX = 0;
+  thetaY = 0;
+  thetaZ = 0;
   translateX = 0;
   translateY = 0;
   scaleFactor = 1.0;
