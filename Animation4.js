@@ -8,7 +8,7 @@ var mvpMatrixLoc;
 // Objects to hold buffer data for shapes (L and O)
 var shapeL, shapeO;
 
-// Lightning
+// Lighting
 var useLightingLoc;
 var isLightEnabled = false;
 
@@ -88,10 +88,11 @@ const vertices2D_O = [
   vec2(-0.2, 0.7), // 7: Inner Top Left
 ];
 
+
 // --- INITIALIZATION ---
 
 window.onload = function init() {
-  var canvas = document.getElementById("gl-canvas");
+var canvas = document.getElementById("gl-canvas");
   gl = canvas.getContext("webgl2");
   if (!gl) {
     alert("WebGL 2.0 unavailable");
@@ -624,9 +625,12 @@ function hexToVec4(hex) {
 // Window resize handler
 function resizeCanvas() {
   const canvas = document.getElementById("gl-canvas");
-  canvas.width = window.innerWidth * 0.74;
-  canvas.height = window.innerHeight * 0.93;
-  gl.viewport(0, 0, canvas.width, canvas.height);
+  canvas.width = window.innerWidth * 0.74; // set canvas width to 74% of current browser window width
+  canvas.height = window.innerHeight * 0.93; // set canvas height to 93% of current browser window height
+  // Update WebGL viewport to match the new canvas size
+  // Parameters: x, y, width, height
+  // (0,0) is bottom-left corner; width/height = full canvas
+  gl.viewport(0, 0, canvas.width, canvas.height); 
 }
 
 // --- UI EVENT LISTENERS ---
@@ -684,25 +688,25 @@ function updateUI() {
     shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
   });
   colorLInput.addEventListener("input", function () {
-    let hex = this.value;
-    COLOR_L = hexToVec4(hex);
+    COLOR_L = hexToVec4(this.value);
     shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
   });
   colorOInput.addEventListener("input", function () {
-    let hex = this.value;
-    COLOR_O = hexToVec4(hex);
+    COLOR_O = hexToVec4(this.value);
     shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
   });
   colorModeSelect.addEventListener("change", function () {
     let mode = colorModes[this.value];
     COLOR_L = hexToVec4(mode.L);
+    colorLInput.value = mode.L;
     COLOR_O = hexToVec4(mode.O);
+    colorOInput.value = mode.O;
     shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
     shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
   });
   bgColorInput.addEventListener("input", function () {
     const hex = hexToVec4(this.value);
-    gl.clearColor(hex[0], hex[1], hex[2], hex[3]); // Update the WebGL clear color
+    gl.clearColor(hex[0], hex[1], hex[2], hex[3]); // Set canvas background colour
   });
 
   // Key-down
@@ -711,12 +715,12 @@ function updateUI() {
       startAnimation();
     } else if (event.key === "r" || event.key === "R") {
       stopResetAnimation();
-    } else if (isAnimating) {
+    } else if (isAnimating) { // Stop processing if animating
       return;
     } else if (event.key === "x" || event.key === "X") {
-      xRotateCheck.checked = !xRotateCheck.checked;
-      xRotateEnabled = xRotateCheck.checked;
-      if (!xRotateEnabled) {
+      xRotateCheck.checked = !xRotateCheck.checked; // enable: false -> true // disable: true -> false
+      xRotateEnabled = xRotateCheck.checked; // rotate if true
+      if (!xRotateEnabled) { // skip if false (keep rotation) else stop rotation if true
         thetaX = 0;
       }
     } else if (event.key === "y" || event.key === "Y") {
@@ -728,6 +732,9 @@ function updateUI() {
     } else if (event.key === "t" || event.key === "T") {
       translateCheck.checked = !translateCheck.checked;
       translateEnabled = translateCheck.checked;
+    }
+    else if (event.key === "l" || event.key === "L") {
+      toggleLight();
     }
   });
 
