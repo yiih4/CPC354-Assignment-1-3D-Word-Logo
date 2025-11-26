@@ -46,6 +46,7 @@ let isRenderActive = false;
 // UI elements
 var startBtn,
   stopBtn,
+  lightBtn,
   yRotateCheck,
   xRotateCheck,
   translateCheck,
@@ -119,7 +120,8 @@ window.onload = function init() {
   updateUI();
 
   // Set Up lighting
-  toggleLight();
+  useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
+  gl.uniform1i(useLightingLoc, 0); // Default: light off
 
   // Start the render loop
   if (!isRenderActive) {
@@ -632,6 +634,7 @@ function updateUI() {
   // Get UI elements
   startBtn = document.getElementById("startBtn");
   stopBtn = document.getElementById("stopBtn");
+  lightBtn = document.getElementById("lightBtn");
   yRotateCheck = document.getElementById("yRotateCheck");
   xRotateCheck = document.getElementById("xRotateCheck");
   translateCheck = document.getElementById("translateCheck");
@@ -649,6 +652,7 @@ function updateUI() {
   // Add event listeners
   startBtn.addEventListener("click", startAnimation);
   stopBtn.addEventListener("click", stopResetAnimation);
+  lightBtn.addEventListener("click", toggleLight);
   yRotateCheck.addEventListener("change", function () {
     yRotateEnabled = this.checked;
     if (!yRotateEnabled) {
@@ -731,17 +735,8 @@ function updateUI() {
   window.addEventListener("resize", resizeCanvas);
 }
 
+// Simple light toggle function
 function toggleLight() {
-  useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
-  gl.uniform1i(useLightingLoc, 0);
-
-  var button = document.getElementById("lightBtn");
-  if (button) {
-    button.onclick = function () {
-      isLightEnabled = !isLightEnabled;
-      this.innerText = "Toggle Light: " + (isLightEnabled ? "ON" : "OFF");
-    };
-  } else {
-    console.log("Button with id 'lightBtn' not found!");
-  }
+  isLightEnabled = !isLightEnabled;
+  lightBtn.innerText = "Toggle Light: " + (isLightEnabled ? "ON" : "OFF");
 }
