@@ -557,6 +557,8 @@ function disableUI() {
   colorLInput.disabled = true;
   colorOInput.disabled = true;
   bgColorInput.disabled = true;
+  lightBtn.disabled = true;
+  
 }
 
 function enableUI() {
@@ -571,6 +573,7 @@ function enableUI() {
   colorLInput.disabled = false;
   colorOInput.disabled = false;
   bgColorInput.disabled = false;
+  lightBtn.disabled = false;
 }
 
 function resetValue() {
