@@ -26,13 +26,13 @@ const colorModes = {
 };
 
 let animSeq = 0; // Animation sequence
-let theta = 0; // Rotation angle in degrees
-let thetaY = 0; // Y-axis rotation
 let thetaX = 0; // X-axis rotation
+let thetaY = 0; // Y-axis rotation
+let thetaZ = 0; // Z-axis rotation
 let scaleFactor = 1.0; // Scaling factor for the word logo
 const maxScale = 2.0; // Target scale for "full-screen" effect
-let translateX = 0,
-  translateY = 0; // Translation values
+let translateX = 0;
+let translateY = 0; // Translation values
 let isAnimating = false;
 let yRotateEnabled = false;
 let xRotateEnabled = false;
@@ -40,7 +40,7 @@ let iterations = 1;
 let currentIteration = 0;
 let animSpeed = 1;
 let additionalAnimPhase = 0;
-let translateEnabled = true;
+let translateEnabled = false;
 let isRenderActive = false;
 
 // UI elements
@@ -88,11 +88,10 @@ const vertices2D_O = [
   vec2(-0.2, 0.7), // 7: Inner Top Left
 ];
 
-
 // --- INITIALIZATION ---
 
 window.onload = function init() {
-var canvas = document.getElementById("gl-canvas");
+  var canvas = document.getElementById("gl-canvas");
   gl = canvas.getContext("webgl2");
   if (!gl) {
     alert("WebGL 2.0 unavailable");
@@ -101,7 +100,7 @@ var canvas = document.getElementById("gl-canvas");
 
   // Configure WebGL
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0.9, 0.9, 0.9, 1.0); // Default White background
+  gl.clearColor(0.9, 0.9, 0.9, 1.0);
   gl.enable(gl.DEPTH_TEST);
 
   // Load shaders
@@ -122,7 +121,7 @@ var canvas = document.getElementById("gl-canvas");
 
   // Set Up lighting
   useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
-  gl.uniform1i(useLightingLoc, 0); // Default: light off
+  gl.uniform1i(useLightingLoc, 0);
 
   // Start the render loop
   if (!isRenderActive) {
@@ -279,7 +278,7 @@ function render() {
       rotateX(thetaX),
       mult(
         rotateY(thetaY),
-        mult(rotateZ(theta), scale(scaleFactor, scaleFactor, 1))
+        mult(rotateZ(thetaZ), scale(scaleFactor, scaleFactor, 1))
       )
     )
   );
@@ -452,23 +451,23 @@ function clockwiseTranslation() {
 function defaultAnim() {
   switch (animSeq) {
     case 0: // Rotate to the right by 180 degrees
-      theta -= 1 * animSpeed;
-      if (theta <= -180) animSeq = 1;
+      thetaZ -= 1 * animSpeed;
+      if (thetaZ <= -180) animSeq = 1;
       break;
 
     case 1: // Rotate back to original
-      theta += 1 * animSpeed;
-      if (theta >= 0) animSeq = 2;
+      thetaZ += 1 * animSpeed;
+      if (thetaZ >= 0) animSeq = 2;
       break;
 
     case 2: // Rotate to the left by 180 degrees
-      theta += 1 * animSpeed;
-      if (theta >= 180) animSeq = 3;
+      thetaZ += 1 * animSpeed;
+      if (thetaZ >= 180) animSeq = 3;
       break;
 
     case 3: // Rotate back to original
-      theta -= 1 * animSpeed;
-      if (theta <= 0) animSeq = 4;
+      thetaZ -= 1 * animSpeed;
+      if (thetaZ <= 0) animSeq = 4;
       break;
 
     case 4: // Gradually enlarge the word logo to full-screen size
@@ -486,7 +485,7 @@ function defaultAnim() {
           if (iterations > 1) {
             animSeq = 9;
           } else {
-            theta = 0;
+            thetaZ = 0;
             scaleFactor = 1.0;
             animSeq = 0;
             currentIteration++;
@@ -508,9 +507,9 @@ function defaultAnim() {
       if (scaleFactor > 1.0) {
         scaleFactor -= 0.01 * animSpeed;
       } else {
-        theta = 0;
         thetaX = 0;
         thetaY = 0;
+        thetaZ = 0;
         translateX = 0;
         translateY = 0;
         scaleFactor = 1.0;
@@ -534,7 +533,6 @@ function startAnimation() {
   currentIteration = 0;
   additionalAnimPhase = 0;
   translationStep = 0;
-
   isAnimating = true;
   disableUI();
 }
@@ -557,6 +555,7 @@ function disableUI() {
   colorLInput.disabled = true;
   colorOInput.disabled = true;
   bgColorInput.disabled = true;
+  lightBtn.disabled = true;
 }
 
 function enableUI() {
@@ -571,9 +570,11 @@ function enableUI() {
   colorLInput.disabled = false;
   colorOInput.disabled = false;
   bgColorInput.disabled = false;
+  lightBtn.disabled = false;
 }
 
 function resetValue() {
+  // Animation/Transform Reset
   theta = 0;
   thetaY = 0;
   thetaX = 0;
@@ -584,12 +585,23 @@ function resetValue() {
   currentIteration = 0;
   additionalAnimPhase = 0;
   translationStep = 0;
+
+  // Checkbox Reset
   yRotateEnabled = false;
   xRotateEnabled = false;
-  translateEnabled = true;
+  translateEnabled = false;
   yRotateCheck.checked = false;
   xRotateCheck.checked = false;
-  translateCheck.checked = true;
+  translateCheck.checked = false;
+
+  // Reset Iteration and Speed to 1
+  iterations = 1;
+  iterationSlider.value = 1;
+  iterationValue.textContent = 1;
+
+  animSpeed = 1;
+  speedSlider.value = 1;
+  speedValue.textContent = 1;
 
   // Reset extrusion depth
   EXTRUSION_DEPTH = 0.5;
@@ -597,14 +609,17 @@ function resetValue() {
   depthValue.textContent = EXTRUSION_DEPTH.toFixed(2);
 
   // Reset logo colors
-  COLOR_L = hexToVec4("#cc0033"); // default red
-  COLOR_O = hexToVec4("#333399"); // default blue
-  colorLInput.value = "#cc0033";
-  colorOInput.value = "#333399";
+  colorModeSelect.value = "classic"; // Set select box to 'classic'
+  COLOR_L = hexToVec4(colorModes.classic.L); // default red
+  COLOR_O = hexToVec4(colorModes.classic.O); // default blue
+  colorLInput.value = colorModes.classic.L;
+  colorOInput.value = colorModes.classic.O;
 
   // Reset canvas background color
   bgColorInput.value = "#E6E6E6";
   gl.clearColor(0.9, 0.9, 0.9, 1.0); // hex #E6E6E6 to RGBA
+
+  // Recreate shapes with reset values
   shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
   shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
 
@@ -630,7 +645,7 @@ function resizeCanvas() {
   // Update WebGL viewport to match the new canvas size
   // Parameters: x, y, width, height
   // (0,0) is bottom-left corner; width/height = full canvas
-  gl.viewport(0, 0, canvas.width, canvas.height); 
+  gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
 // --- UI EVENT LISTENERS ---
@@ -715,12 +730,14 @@ function updateUI() {
       startAnimation();
     } else if (event.key === "r" || event.key === "R") {
       stopResetAnimation();
-    } else if (isAnimating) { // Stop processing if animating
+    } else if (isAnimating) {
+      // Stop processing if animating
       return;
     } else if (event.key === "x" || event.key === "X") {
       xRotateCheck.checked = !xRotateCheck.checked; // enable: false -> true // disable: true -> false
       xRotateEnabled = xRotateCheck.checked; // rotate if true
-      if (!xRotateEnabled) { // skip if false (keep rotation) else stop rotation if true
+      if (!xRotateEnabled) {
+        // skip if false (keep rotation) else stop rotation if true
         thetaX = 0;
       }
     } else if (event.key === "y" || event.key === "Y") {
@@ -732,8 +749,7 @@ function updateUI() {
     } else if (event.key === "t" || event.key === "T") {
       translateCheck.checked = !translateCheck.checked;
       translateEnabled = translateCheck.checked;
-    }
-    else if (event.key === "l" || event.key === "L") {
+    } else if (event.key === "l" || event.key === "L") {
       toggleLight();
     }
   });
