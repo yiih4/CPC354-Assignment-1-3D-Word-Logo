@@ -211,6 +211,7 @@ function createExtrudedShape(vertices2D, depth, color, type) {
     cBuffer: cBuffer,
     iBuffer: iBuffer,
     count: indices.length,
+    vlength: vlength,
   };
 }
 
@@ -594,7 +595,7 @@ function resetValue() {
   xRotateCheck.checked = false;
   translateCheck.checked = true;
   colorModeSelect.value = "classic";
-  
+
   // Reset extrusion depth
   EXTRUSION_DEPTH = 0.5;
   depthSlider.value = EXTRUSION_DEPTH;
@@ -606,7 +607,7 @@ function resetValue() {
   colorLInput.value = "#cc0033";
   colorOInput.value = "#333399";
 
-  // Reset canvas background color
+  // Reset canvas background and shape color
   bgColorInput.value = "#E6E6E6";
   gl.clearColor(0.9, 0.9, 0.9, 1.0); // hex #E6E6E6 to RGBA
   shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
@@ -619,7 +620,7 @@ function resetValue() {
 
 // Helper function to convert #RRGGBB to vec4
 function hexToVec4(hex) {
-  // #cc0033, cc=204
+  // #cc0303, cc=204                         // html,css 0-255 color channel ; WebGL 0.0-1.0
   let r = parseInt(hex.slice(1, 3), 16) / 255; // 204 / 255 ≈ 0.8
   let g = parseInt(hex.slice(3, 5), 16) / 255;
   let b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -635,6 +636,40 @@ function resizeCanvas() {
   // Parameters: x, y, width, height
   // (0,0) is bottom-left corner; width/height = full canvas
   gl.viewport(0, 0, canvas.width, canvas.height); 
+}
+
+// Update shape extrusion depth in the existing pBuffer (position buffer) on GPU
+function updateShapeDepth(shape, newDepth, vertices2D) {
+  const halfDepth = newDepth / 2.0;
+  const vlength = vertices2D.length;
+  let newPositions = [];
+  // Recalculate all 3D positions
+  for (let i = 0; i < vlength; i++) { // Front Face (z = +halfDepth)
+    newPositions.push(vec3(vertices2D[i][0], vertices2D[i][1], halfDepth));
+  }
+  for (let i = 0; i < vlength; i++) { // Back Face (z = -halfDepth)
+    newPositions.push(vec3(vertices2D[i][0], vertices2D[i][1], -halfDepth));
+  }
+  // Replaces the existing data starting at offset 0
+  gl.bindBuffer(gl.ARRAY_BUFFER, shape.pBuffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newPositions)); 
+}
+
+// Update shape colours in the existing cBuffer (colour buffer) on GPU
+function updateShapeColor(shape, newColor) {
+  const color = newColor;
+  const vlength = shape.vlength;
+  let newColors = [];
+  // Recalculate all colors
+  for (let i = 0; i < vlength; i++) { // Front Face (0 to vlength - 1)
+    newColors.push(color);
+  }
+  for (let i = 0; i < vlength; i++) { // Back Face (vlength to 2*vlength - 1) - slightly darker
+    newColors.push(vec4(color[0] * 0.5, color[1] * 0.5, color[2] * 0.5, 1.0));
+  }
+  // Replaces the existing data starting at offset 0
+  gl.bindBuffer(gl.ARRAY_BUFFER, shape.cBuffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newColors)); 
 }
 
 // --- UI EVENT LISTENERS ---
@@ -687,17 +722,16 @@ function updateUI() {
   depthSlider.addEventListener("input", function () {
     EXTRUSION_DEPTH = parseFloat(this.value);
     depthValue.textContent = parseFloat(this.value).toFixed(2);
-    // Recreate shapes with new extrusion depth
-    shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
-    shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
+    updateShapeDepth(shapeL, EXTRUSION_DEPTH, vertices2D_L);
+    updateShapeDepth(shapeO, EXTRUSION_DEPTH, vertices2D_O);
   });
   colorLInput.addEventListener("input", function () {
     COLOR_L = hexToVec4(this.value);
-    shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
+    updateShapeColor(shapeL, COLOR_L);
   });
   colorOInput.addEventListener("input", function () {
     COLOR_O = hexToVec4(this.value);
-    shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
+    updateShapeColor(shapeO, COLOR_O);
   });
   colorModeSelect.addEventListener("change", function () {
     let mode = colorModes[this.value];
@@ -705,8 +739,8 @@ function updateUI() {
     colorLInput.value = mode.L;
     COLOR_O = hexToVec4(mode.O);
     colorOInput.value = mode.O;
-    shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
-    shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
+    updateShapeColor(shapeL, COLOR_L);
+    updateShapeColor(shapeO, COLOR_O);
   });
   bgColorInput.addEventListener("input", function () {
     const hex = hexToVec4(this.value);
