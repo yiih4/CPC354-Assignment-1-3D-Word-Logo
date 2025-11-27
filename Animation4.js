@@ -26,22 +26,20 @@ const colorModes = {
 };
 
 let animSeq = 0; // Animation sequence
-let theta = 0; // Rotation angle in degrees
-let thetaY = 0; // Y-axis rotation
 let thetaX = 0; // X-axis rotation
+let thetaY = 0; // Y-axis rotation
+let thetaZ = 0; // Z-axis rotation
 let scaleFactor = 1.0; // Scaling factor for the word logo
 const maxScale = 2.0; // Target scale for "full-screen" effect
-let translateX = 0,
-  translateY = 0; // Translation values
+let translateX = 0;
+let translateY = 0; // Translation values
 let isAnimating = false;
 let yRotateEnabled = false;
 let xRotateEnabled = false;
 let iterations = 1;
 let currentIteration = 0;
 let animSpeed = 1;
-let additionalAnimPhase = 0;
-let translateEnabled = true;
-let isRenderActive = false;
+let translateEnabled = false;
 
 // UI elements
 var startBtn,
@@ -88,11 +86,10 @@ const vertices2D_O = [
   vec2(-0.2, 0.7), // 7: Inner Top Left
 ];
 
-
 // --- INITIALIZATION ---
 
 window.onload = function init() {
-var canvas = document.getElementById("gl-canvas");
+  var canvas = document.getElementById("gl-canvas");
   gl = canvas.getContext("webgl2");
   if (!gl) {
     alert("WebGL 2.0 unavailable");
@@ -101,7 +98,7 @@ var canvas = document.getElementById("gl-canvas");
 
   // Configure WebGL
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0.9, 0.9, 0.9, 1.0); // Default White background
+  gl.clearColor(0.9, 0.9, 0.9, 1.0);
   gl.enable(gl.DEPTH_TEST);
 
   // Load shaders
@@ -122,13 +119,10 @@ var canvas = document.getElementById("gl-canvas");
 
   // Set Up lighting
   useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
-  gl.uniform1i(useLightingLoc, 0); // Default: light off
+  gl.uniform1i(useLightingLoc, 0);
 
   // Start the render loop
-  if (!isRenderActive) {
-    isRenderActive = true;
-    render();
-  }
+  render();
 };
 
 // --- GEOMETRY BUILDER ---
@@ -263,14 +257,9 @@ function render() {
   const P = perspective(45, gl.canvas.width / gl.canvas.height, 0.1, 100);
   const VP = mult(P, V);
 
+  // Only run animation logic if explicitly enabled
   if (isAnimating) {
-    defaultAnim();
-  }
-
-  if (additionalAnimPhase === 1 && xRotateEnabled) {
-    thetaX += 1 * animSpeed;
-  } else if (additionalAnimPhase === 2 && yRotateEnabled) {
-    thetaY += 1 * animSpeed;
+    animation();
   }
 
   // Apply transformations
@@ -280,7 +269,7 @@ function render() {
       rotateX(thetaX),
       mult(
         rotateY(thetaY),
-        mult(rotateZ(theta), scale(scaleFactor, scaleFactor, 1))
+        mult(rotateZ(thetaZ), scale(scaleFactor, scaleFactor, 1))
       )
     )
   );
@@ -290,10 +279,7 @@ function render() {
   drawShape(shapeO, mult(VP, mult(M, translate(0, 0, 0)))); // O
   drawShape(shapeL, mult(VP, mult(M, translate(1.5, 0, 0)))); // Right L
 
-  // Continue animation loop
-  if (isRenderActive) {
-    requestAnimationFrame(render);
-  }
+  requestAnimationFrame(render);
 }
 
 function drawShape(shape, mvpMatrix) {
@@ -319,93 +305,88 @@ function drawShape(shape, mvpMatrix) {
   gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
 }
 
-// Additional animations function
-function additionalAnim() {
+// Handles the animation sequence of the word logo
+function animation() {
+  // If the animation has completed the required number of iterations, stop the animation and re-enable all UI controls.
+  if (currentIteration >= iterations) {
+    isAnimating = false;
+    enableUI();
+    return; // Exit the function immediately
+  }
+
   switch (animSeq) {
-    case 5: // Start additional animations after enlarge
-      if (translateEnabled) {
-        clockwiseTranslation();
-      } else if (xRotateEnabled) {
-        additionalAnimPhase = 1;
-        animSeq = 7;
-      } else if (yRotateEnabled) {
-        additionalAnimPhase = 2;
-        animSeq = 8;
-      } else {
-        currentIteration++;
-        if (currentIteration < iterations) {
-          if (iterations > 1) {
-            animSeq = 9;
-          } else {
-            resetAnimationCycle();
-          }
-        } else {
-          isAnimating = false;
-          enableUI();
-        }
-      }
+    case 0: // Rotate to the right by 180 degrees
+      thetaZ -= 1 * animSpeed;
+      if (thetaZ <= -180) animSeq = 1;
       break;
 
-    case 6: // Translation complete, move to additional animations
-      if (xRotateEnabled) {
-        additionalAnimPhase = 1;
-        animSeq = 7;
-      } else if (yRotateEnabled) {
-        additionalAnimPhase = 2;
-        animSeq = 8;
-      } else {
-        currentIteration++;
-        if (currentIteration < iterations) {
-          if (iterations > 1) {
-            animSeq = 9;
-          } else {
-            resetAnimationCycle();
-          }
-        } else {
-          isAnimating = false;
-          enableUI();
-        }
-      }
+    case 1: // Rotate back to original
+      thetaZ += 1 * animSpeed;
+      if (thetaZ >= 0) animSeq = 2;
       break;
 
-    case 7: // X-axis rotation phase
-      if (thetaX >= 360) {
-        thetaX = 0;
-        if (yRotateEnabled) {
-          additionalAnimPhase = 2;
+    case 2: // Rotate to the left by 180 degrees
+      thetaZ += 1 * animSpeed;
+      if (thetaZ >= 180) animSeq = 3;
+      break;
+
+    case 3: // Rotate back to original
+      thetaZ -= 1 * animSpeed;
+      if (thetaZ <= 0) animSeq = 4;
+      break;
+
+    case 4: // Gradually enlarge the word logo to full-screen size
+      if (scaleFactor < maxScale) {
+        scaleFactor += 0.01 * animSpeed;
+      } else {
+        // Decide next phase based on enabled options
+        if (translateEnabled) {
+          animSeq = 5; // Start translation
+        } else if (xRotateEnabled) {
+          animSeq = 6; // Start X-rotation
+        } else if (yRotateEnabled) {
+          animSeq = 7; // Start Y-rotation
+        } else {
+          // If no additional animation is enabled, jump to Delarge (Phase 8)
           animSeq = 8;
-        } else {
-          currentIteration++;
-          if (currentIteration < iterations) {
-            if (iterations > 1) {
-              animSeq = 9;
-            } else {
-              resetAnimationCycle();
-            }
-          } else {
-            isAnimating = false;
-            enableUI();
-            additionalAnimPhase = 0;
-          }
         }
       }
       break;
 
-    case 8: // Y-axis rotation phase
-      if (thetaY >= 360) {
-        thetaY = 0;
-        currentIteration++;
-        if (currentIteration < iterations) {
-          if (iterations > 1) {
-            animSeq = 9;
-          } else {
-            resetAnimationCycle();
-          }
-        } else {
-          isAnimating = false;
-          enableUI();
-          additionalAnimPhase = 0;
+    case 5: // Start additional animations: Translation
+      clockwiseTranslation(); // The function handles moving to animSeq 6
+      break;
+
+    case 6: // X-axis rotation phase
+      if (xRotateEnabled) {
+        thetaX += 1 * animSpeed;
+        if (thetaX >= 360) {
+          thetaX = 0;
+          animSeq = 7; // Move to next phase
         }
+      } else {
+        animSeq = 7; // Skip to Y-rotation phase
+      }
+      break;
+
+    case 7: // Y-axis rotation phase
+      if (yRotateEnabled) {
+        thetaY += 1 * animSpeed;
+        if (thetaY >= 360) {
+          thetaY = 0;
+          animSeq = 8;
+        }
+      } else {
+        animSeq = 8;
+      }
+      break;
+
+    case 8: // Delarge to origin size after each iteration
+      if (scaleFactor > 1.0) {
+        scaleFactor -= 0.01 * animSpeed;
+      } else {
+        currentIteration++;
+        animSeq = 0; // Start the next iteration from the beginning
       }
       break;
   }
@@ -449,93 +430,17 @@ function clockwiseTranslation() {
   }
 }
 
-// Handles the animation sequence of the word logo
-function defaultAnim() {
-  switch (animSeq) {
-    case 0: // Rotate to the right by 180 degrees
-      theta -= 1 * animSpeed;
-      if (theta <= -180) animSeq = 1;
-      break;
-
-    case 1: // Rotate back to original
-      theta += 1 * animSpeed;
-      if (theta >= 0) animSeq = 2;
-      break;
-
-    case 2: // Rotate to the left by 180 degrees
-      theta += 1 * animSpeed;
-      if (theta >= 180) animSeq = 3;
-      break;
-
-    case 3: // Rotate back to original
-      theta -= 1 * animSpeed;
-      if (theta <= 0) animSeq = 4;
-      break;
-
-    case 4: // Gradually enlarge the word logo to full-screen size
-      if (scaleFactor < maxScale) {
-        scaleFactor += 0.01 * animSpeed;
-      } else {
-        // Check if we need to repeat default animation
-        if (
-          currentIteration + 1 < iterations &&
-          !translateEnabled &&
-          !xRotateEnabled &&
-          !yRotateEnabled
-        ) {
-          // Start delarge animation if iterations > 1
-          if (iterations > 1) {
-            animSeq = 9;
-          } else {
-            theta = 0;
-            scaleFactor = 1.0;
-            animSeq = 0;
-            currentIteration++;
-          }
-        } else {
-          animSeq = 5;
-        }
-      }
-      break;
-
-    case 5: // Start additional animations after enlarge
-    case 6: // Translation complete
-    case 7: // X-axis rotation phase
-    case 8: // Y-axis rotation phase
-      additionalAnim();
-      break;
-
-    case 9: // Delarge to origin size after each iteration
-      if (scaleFactor > 1.0) {
-        scaleFactor -= 0.01 * animSpeed;
-      } else {
-        theta = 0;
-        thetaX = 0;
-        thetaY = 0;
-        translateX = 0;
-        translateY = 0;
-        scaleFactor = 1.0;
-        translationStep = 0;
-        additionalAnimPhase = 0;
-        animSeq = 0;
-      }
-      break;
-  }
-}
-
 function startAnimation() {
   // Reset values before starting
-  theta = 0;
-  thetaY = 0;
   thetaX = 0;
+  thetaY = 0;
+  thetaZ = 0;
   translateX = 0;
   translateY = 0;
   scaleFactor = 1.0;
   animSeq = 0;
   currentIteration = 0;
-  additionalAnimPhase = 0;
   translationStep = 0;
-
   isAnimating = true;
   disableUI();
 }
@@ -559,7 +464,6 @@ function disableUI() {
   colorOInput.disabled = true;
   bgColorInput.disabled = true;
   lightBtn.disabled = true;
-  
 }
 
 function enableUI() {
@@ -578,23 +482,33 @@ function enableUI() {
 }
 
 function resetValue() {
-  theta = 0;
-  thetaY = 0;
+  // Animation/Transform Reset
   thetaX = 0;
+  thetaY = 0;
+  thetaZ = 0;
   translateX = 0;
   translateY = 0;
   scaleFactor = 1.0;
   animSeq = 0;
   currentIteration = 0;
-  additionalAnimPhase = 0;
   translationStep = 0;
+
+  // Checkbox Reset
   yRotateEnabled = false;
   xRotateEnabled = false;
-  translateEnabled = true;
+  translateEnabled = false;
   yRotateCheck.checked = false;
   xRotateCheck.checked = false;
-  translateCheck.checked = true;
-  colorModeSelect.value = "classic";
+  translateCheck.checked = false;
+
+  // Reset Iteration and Speed to 1
+  iterations = 1;
+  iterationSlider.value = 1;
+  iterationValue.textContent = 1;
+
+  animSpeed = 1;
+  speedSlider.value = 1;
+  speedValue.textContent = 1;
 
   // Reset extrusion depth
   EXTRUSION_DEPTH = 0.5;
@@ -602,14 +516,17 @@ function resetValue() {
   depthValue.textContent = EXTRUSION_DEPTH.toFixed(2);
 
   // Reset logo colors
-  COLOR_L = hexToVec4("#cc0033"); // default red
-  COLOR_O = hexToVec4("#333399"); // default blue
-  colorLInput.value = "#cc0033";
-  colorOInput.value = "#333399";
+  colorModeSelect.value = "classic"; // Set select box to 'classic'
+  COLOR_L = hexToVec4(colorModes.classic.L); // default red
+  COLOR_O = hexToVec4(colorModes.classic.O); // default blue
+  colorLInput.value = colorModes.classic.L;
+  colorOInput.value = colorModes.classic.O;
 
   // Reset canvas background and shape color
   bgColorInput.value = "#E6E6E6";
   gl.clearColor(0.9, 0.9, 0.9, 1.0); // hex #E6E6E6 to RGBA
+
+  // Recreate shapes with reset values
   shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
   shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
 
@@ -635,7 +552,7 @@ function resizeCanvas() {
   // Update WebGL viewport to match the new canvas size
   // Parameters: x, y, width, height
   // (0,0) is bottom-left corner; width/height = full canvas
-  gl.viewport(0, 0, canvas.width, canvas.height); 
+  gl.viewport(0, 0, canvas.width, canvas.height);
 }
 
 // Update shape extrusion depth in the existing pBuffer (position buffer) on GPU
@@ -753,12 +670,14 @@ function updateUI() {
       startAnimation();
     } else if (event.key === "r" || event.key === "R") {
       stopResetAnimation();
-    } else if (isAnimating) { // Stop processing if animating
+    } else if (isAnimating) {
+      // Stop processing if animating
       return;
     } else if (event.key === "x" || event.key === "X") {
       xRotateCheck.checked = !xRotateCheck.checked; // enable: false -> true // disable: true -> false
       xRotateEnabled = xRotateCheck.checked; // rotate if true
-      if (!xRotateEnabled) { // skip if false (keep rotation) else stop rotation if true
+      if (!xRotateEnabled) {
+        // skip if false (keep rotation) else stop rotation if true
         thetaX = 0;
       }
     } else if (event.key === "y" || event.key === "Y") {
@@ -770,8 +689,7 @@ function updateUI() {
     } else if (event.key === "t" || event.key === "T") {
       translateCheck.checked = !translateCheck.checked;
       translateEnabled = translateCheck.checked;
-    }
-    else if (event.key === "l" || event.key === "L") {
+    } else if (event.key === "l" || event.key === "L") {
       toggleLight();
     }
   });
