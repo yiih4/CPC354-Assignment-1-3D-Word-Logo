@@ -63,27 +63,27 @@ var startBtn,
 
 // Define 2D profile for 'L' (Counter-Clockwise)
 const vertices2D_L = [
-  vec2(-0.5, -1.0), // 0: Bottom Left
-  vec2(0.5, -1.0), // 1: Bottom Right
-  vec2(0.5, -0.7), // 2: Inner Corner Right
-  vec2(-0.2, -0.7), // 3: Inner Corner Left
-  vec2(-0.2, 1.0), // 4: Top Right
-  vec2(-0.5, 1.0), // 5: Top Left
+  vec2(-0.5, -1.0), // 0: Bottom left
+  vec2(0.5, -1.0), // 1: Bottom right
+  vec2(0.5, -0.7), // 2: Inner corner right
+  vec2(-0.2, -0.7), // 3: Inner corner left
+  vec2(-0.2, 1.0), // 4: Top right
+  vec2(-0.5, 1.0), // 5: Top left
 ];
 
 // Define 2D profile for 'O' (Counter-Clockwise)
-// Indices 0-3: Outer Box, 4-7: Inner Box (Hole)
+// Indices 0-3: outer box, 4-7: inner box (Hole)
 const vertices2D_O = [
-  // Outer Box
-  vec2(-0.5, -1.0), // 0: Bottom Left
-  vec2(0.5, -1.0), // 1: Bottom Right
-  vec2(0.5, 1.0), // 2: Top Right
-  vec2(-0.5, 1.0), // 3: Top Left
-  // Inner Box
-  vec2(-0.2, -0.7), // 4: Inner Bottom Left
-  vec2(0.2, -0.7), // 5: Inner Bottom Right
-  vec2(0.2, 0.7), // 6: Inner Top Right
-  vec2(-0.2, 0.7), // 7: Inner Top Left
+  // Outer box
+  vec2(-0.5, -1.0), // 0: Bottom left
+  vec2(0.5, -1.0), // 1: Bottom right
+  vec2(0.5, 1.0), // 2: Top right
+  vec2(-0.5, 1.0), // 3: Top left
+  // Inner box
+  vec2(-0.2, -0.7), // 4: Inner bottom left
+  vec2(0.2, -0.7), // 5: Inner bottom right
+  vec2(0.2, 0.7), // 6: Inner top right
+  vec2(-0.2, 0.7), // 7: Inner top left
 ];
 
 // --- INITIALIZATION ---
@@ -107,7 +107,7 @@ window.onload = function init() {
 
   mvpMatrixLoc = gl.getUniformLocation(program, "uMVP");
 
-  // Build Shapes
+  // Build shapes
   shapeL = createExtrudedShape(vertices2D_L, EXTRUSION_DEPTH, COLOR_L, "L");
   shapeO = createExtrudedShape(vertices2D_O, EXTRUSION_DEPTH, COLOR_O, "O");
 
@@ -117,7 +117,7 @@ window.onload = function init() {
   // Setup UI event listeners
   updateUI();
 
-  // Set Up lighting
+  // Set up lighting
   useLightingLoc = gl.getUniformLocation(program, "uLightEnabled");
   gl.uniform1i(useLightingLoc, 0);
 
@@ -134,12 +134,12 @@ function createExtrudedShape(vertices2D, depth, color, type) {
   var vlength = vertices2D.length;
 
   // Generate Vertices
-  // Front Face (z = +halfDepth = +0.25)
+  // Front face (z = +halfDepth)
   for (let i = 0; i < vlength; i++) {
     positions.push(vec3(vertices2D[i][0], vertices2D[i][1], halfDepth));
     colors.push(color);
   }
-  // Back Face (z = -halfDepth = -0.25)
+  // Back face (z = -halfDepth)
   for (let i = 0; i < vlength; i++) {
     positions.push(vec3(vertices2D[i][0], vertices2D[i][1], -halfDepth));
     // Make back face slightly darker
@@ -148,37 +148,37 @@ function createExtrudedShape(vertices2D, depth, color, type) {
 
   // Triangulation: Generate Indices
   if (type === "L") {
-    // Front Face
+    // Front faces
     indices.push(0, 1, 3);
     indices.push(1, 2, 3);
     indices.push(0, 3, 5);
     indices.push(3, 4, 5);
 
-    // Back Face (Offset by vlength, reverse winding order)
+    // Back faces (Offset by vlength, reverse winding order)
     indices.push(vlength + 0, vlength + 3, vlength + 1);
     indices.push(vlength + 1, vlength + 3, vlength + 2);
     indices.push(vlength + 0, vlength + 5, vlength + 3);
     indices.push(vlength + 3, vlength + 5, vlength + 4);
 
-    // Side Faces (Standard loop)
+    // Side faces (Standard loop)
     generateSideIndices(indices, vlength);
   } else if (type === "O") {
-    // Front Face (4 trapezoids connecting outer to inner)
+    // Front faces (4 trapezoids connecting outer to inner)
     pushQuad(indices, 0, 1, 5, 4); // Bottom
     pushQuad(indices, 1, 2, 6, 5); // Right
     pushQuad(indices, 2, 3, 7, 6); // Top
     pushQuad(indices, 3, 0, 4, 7); // Left
 
-    // Back Face (Offset by vlength, reverse winding)
+    // Back faces (Offset by vlength, reverse winding)
     pushBackQuad(indices, 0, 1, 5, 4, vlength);
     pushBackQuad(indices, 1, 2, 6, 5, vlength);
     pushBackQuad(indices, 2, 3, 7, 6, vlength);
     pushBackQuad(indices, 3, 0, 4, 7, vlength);
 
-    // Side Faces
-    // External Loop (0->1->2->3->0)
+    // Side faces
+    // External loop (0->1->2->3->0)
     generateSideLoop(indices, 0, 4, vlength);
-    // Internal Loop (4->5->6->7->4)
+    // Internal loop (4->5->6->7->4)
     generateSideLoop(indices, 4, 4, vlength);
   }
 
@@ -252,7 +252,7 @@ function render() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.uniform1i(useLightingLoc, isLightEnabled ? 1 : 0);
 
-  // Setup Camera
+  // Setup camera
   const V = lookAt(vec3(1, 4, 9), vec3(0, 0, 0), vec3(0, 1, 0));
   const P = perspective(45, gl.canvas.width / gl.canvas.height, 0.1, 100);
   const VP = mult(P, V);
@@ -301,7 +301,7 @@ function drawShape(shape, mvpMatrix) {
   // Send Matrix Uniform
   gl.uniformMatrix4fv(mvpMatrixLoc, false, flatten(mvpMatrix));
 
-  // Draw Elements (Indexed Drawing)
+  // Draw elements (Indexed Drawing)
   gl.drawElements(gl.TRIANGLES, shape.count, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -561,15 +561,17 @@ function updateShapeDepth(shape, newDepth, vertices2D) {
   const vlength = vertices2D.length;
   let newPositions = [];
   // Recalculate all 3D positions
-  for (let i = 0; i < vlength; i++) { // Front Face (z = +halfDepth)
+  for (let i = 0; i < vlength; i++) {
+    // Front Face (z = +halfDepth)
     newPositions.push(vec3(vertices2D[i][0], vertices2D[i][1], halfDepth));
   }
-  for (let i = 0; i < vlength; i++) { // Back Face (z = -halfDepth)
+  for (let i = 0; i < vlength; i++) {
+    // Back Face (z = -halfDepth)
     newPositions.push(vec3(vertices2D[i][0], vertices2D[i][1], -halfDepth));
   }
   // Replaces the existing data starting at offset 0
   gl.bindBuffer(gl.ARRAY_BUFFER, shape.pBuffer);
-  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newPositions)); 
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newPositions));
 }
 
 // Update shape colours in the existing cBuffer (colour buffer) on GPU
@@ -578,15 +580,17 @@ function updateShapeColor(shape, newColor) {
   const vlength = shape.vlength;
   let newColors = [];
   // Recalculate all colors
-  for (let i = 0; i < vlength; i++) { // Front Face (0 to vlength - 1)
+  for (let i = 0; i < vlength; i++) {
+    // Front Face (0 to vlength - 1)
     newColors.push(color);
   }
-  for (let i = 0; i < vlength; i++) { // Back Face (vlength to 2*vlength - 1) - slightly darker
+  for (let i = 0; i < vlength; i++) {
+    // Back Face (vlength to 2*vlength - 1) - slightly darker
     newColors.push(vec4(color[0] * 0.5, color[1] * 0.5, color[2] * 0.5, 1.0));
   }
   // Replaces the existing data starting at offset 0
   gl.bindBuffer(gl.ARRAY_BUFFER, shape.cBuffer);
-  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newColors)); 
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, flatten(newColors));
 }
 
 // --- UI EVENT LISTENERS ---
@@ -694,7 +698,7 @@ function updateUI() {
     }
   });
 
-  //Window resize
+  // Window resize
   window.addEventListener("resize", resizeCanvas);
 }
 
